@@ -35,6 +35,8 @@ contract DeployProtocol is Script {
 
         // 4. Deploy YieldVault (UUPS Proxy)
         YieldVault implementation = new YieldVault();
+        console2.log("YieldVault Implementation deployed at:", address(implementation));
+        
         bytes memory initData = abi.encodeWithSelector(
             YieldVault.initialize.selector,
             address(govToken),
