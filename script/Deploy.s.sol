@@ -15,7 +15,6 @@ import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.s
 contract DeployProtocol is Script {
     function run() external {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
-        address deployer = vm.addr(deployerPrivateKey);
 
         vm.startBroadcast(deployerPrivateKey);
 
@@ -28,9 +27,8 @@ contract DeployProtocol is Script {
         console2.log("AMMFactory deployed at:", address(factory));
 
         // 3. Deploy Oracle Consumer (using mock or real feed address)
-        // For Arbitrum Sepolia ETH/USD feed: 0xd3062148e75917A4000d273bc51Aa95610ecD2C3 (example)
-        address ethUsdFeed = 0xd3062148e75917A4000d273bc51Aa95610ecD2C3; 
-        OracleConsumer oracle = new OracleConsumer(ethUsdFeed);
+        // For Arbitrum Sepolia ETH/USD feed: 0xd3062148e75917A4000d273bC51aA95610eCd2C3
+        OracleConsumer oracle = new OracleConsumer();
         console2.log("OracleConsumer deployed at:", address(oracle));
 
         // 4. Deploy YieldVault (UUPS Proxy)

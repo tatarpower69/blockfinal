@@ -1,10 +1,10 @@
 {
   "ArbitrumSepolia": {
-    "GovToken": "",
-    "AMMFactory": "",
-    "OracleConsumer": "",
-    "YieldVaultImplementation": "",
-    "YieldVaultProxy": "",
-    "lastUpdate": ""
+    "GovToken": "0x2d16DA4Df8CFB3A6962Aa28Dce9d0c6F089d6ac7",
+    "AMMFactory": "0x84DE709F2f2119aE18BA04c8096472e4a9366F6A",
+    "OracleConsumer": "0xAcE38F2587fFD46b44b132dCfb608D446A561589",
+    "YieldVaultImplementation": "0x3677a451d2D2DC332CF45c5EDd09144f8C8E06d4",
+    "YieldVaultProxy": "0x64178a180DA30EcA3F0b03674911cD33EB5933Ac",
+    "lastUpdate": "May 14, 2026"
   }
 }
