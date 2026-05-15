@@ -5,13 +5,14 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title DeFiAMM
  * @dev A constant-product AMM (x * y = k) implementation built from scratch.
- * Includes 0.3% fee and slippage protection.
+ * Optimized with CEI pattern and dynamic fee management by DAO.
  */
-contract DeFiAMM is ERC20, ReentrancyGuard {
+contract DeFiAMM is ERC20, ReentrancyGuard, Ownable {
     using SafeERC20 for IERC20;
 
     IERC20 public immutable TOKEN0;
@@ -21,13 +22,14 @@ contract DeFiAMM is ERC20, ReentrancyGuard {
     uint256 public reserve1;
 
     uint256 public constant FEE_DENOMINATOR = 1000;
-    uint256 public constant FEE = 3; // 0.3%
+    uint256 public fee = 3; // Default 0.3%, adjustable by owner (DAO)
 
     event Swap(address indexed user, address indexed tokenIn, uint256 amountIn, uint256 amountOut);
     event AddLiquidity(address indexed user, uint256 amount0, uint256 amount1, uint256 shares);
     event RemoveLiquidity(address indexed user, uint256 amount0, uint256 amount1, uint256 shares);
+    event FeeUpdated(uint256 newFee);
 
-    constructor(address _token0, address _token1) ERC20("AMM LP Token", "ALP") {
+    constructor(address _token0, address _token1) ERC20("AMM LP Token", "ALP") Ownable(msg.sender) {
         TOKEN0 = IERC20(_token0);
         TOKEN1 = IERC20(_token1);
     }
@@ -38,10 +40,14 @@ contract DeFiAMM is ERC20, ReentrancyGuard {
     }
 
     /**
-     * @dev Swap tokens using the constant-product formula.
-     * @param amountIn Amount of tokens being sent.
-     * @param minAmountOut Minimum amount of tokens expected (slippage protection).
+     * @dev Allows the DAO (owner) to update the swap fee.
      */
+    function setFee(uint256 newFee) external onlyOwner {
+        require(newFee <= 10, "Fee too high"); // Max 1%
+        fee = newFee;
+        emit FeeUpdated(newFee);
+    }
+
     function swap(address tokenInAddress, uint256 amountIn, uint256 minAmountOut) external nonReentrant returns (uint256 amountOut) {
         require(tokenInAddress == address(TOKEN0) || tokenInAddress == address(TOKEN1), "Invalid token");
         require(amountIn > 0, "Amount must be > 0");
@@ -53,10 +59,7 @@ contract DeFiAMM is ERC20, ReentrancyGuard {
 
         tokenIn.safeTransferFrom(msg.sender, address(this), amountIn);
 
-        // 0.3% fee: amountInWithFee = amountIn * 997 / 1000
-        uint256 amountInWithFee = (amountIn * (FEE_DENOMINATOR - FEE)) / FEE_DENOMINATOR;
-        
-        // dy = (y * dx) / (x + dx)
+        uint256 amountInWithFee = (amountIn * (FEE_DENOMINATOR - fee)) / FEE_DENOMINATOR;
         amountOut = (resOut * amountInWithFee) / (resIn + amountInWithFee);
         require(amountOut >= minAmountOut, "Slippage too high");
 
@@ -100,9 +103,6 @@ contract DeFiAMM is ERC20, ReentrancyGuard {
         emit RemoveLiquidity(msg.sender, amount0, amount1, shares);
     }
 
-    /**
-     * @dev Gas-optimized square root using inline Yul assembly.
-     */
     function _sqrtYul(uint256 y) internal pure returns (uint256 z) {
         assembly {
             switch y

@@ -1,0 +1,47 @@
+specVersion: 0.0.5
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: DeFiAMM
+    network: arbitrum-sepolia
+    source:
+      address: "0x84DE709F2f2119aE18BA04c8096472e4a9366F6A"
+      abi: DeFiAMM
+      startBlock: 0
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Swap
+        - LiquidityPosition
+      abis:
+        - name: DeFiAMM
+          file: ../out/DeFiAMM.sol/DeFiAMM.json
+      eventHandlers:
+        - event: Swap(indexed address,indexed address,uint256,uint256)
+          handler: handleSwap
+        - event: AddLiquidity(indexed address,uint256,uint256,uint256)
+          handler: handleAddLiquidity
+      file: ./src/mapping.ts
+  - kind: ethereum
+    name: YieldVault
+    network: arbitrum-sepolia
+    source:
+      address: "0x64178a180DA30EcA3F0b03674911cD33EB5933Ac"
+      abi: YieldVault
+      startBlock: 0
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - VaultYield
+      abis:
+        - name: YieldVault
+          file: ../out/YieldVault.sol/YieldVault.json
+      eventHandlers:
+        - event: Deposit(indexed address,indexed address,uint256,uint256)
+          handler: handleDeposit
+      file: ./src/mapping.ts

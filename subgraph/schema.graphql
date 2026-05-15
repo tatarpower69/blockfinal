@@ -1,0 +1,36 @@
+type Swap @entity {
+  id: ID!
+  user: Bytes!
+  tokenIn: Bytes!
+  amountIn: BigInt!
+  amountOut: BigInt!
+  timestamp: BigInt!
+}
+
+type LiquidityPosition @entity {
+  id: ID!
+  user: Bytes!
+  pair: Bytes!
+  shares: BigInt!
+  token0Amount: BigInt!
+  token1Amount: BigInt!
+  timestamp: BigInt!
+}
+
+type VaultYield @entity {
+  id: ID!
+  vault: Bytes!
+  totalAssets: BigInt!
+  sharePrice: BigInt!
+  timestamp: BigInt!
+}
+
+type Proposal @entity {
+  id: ID!
+  proposer: Bytes!
+  targets: [Bytes!]!
+  values: [BigInt!]!
+  calldatas: [Bytes!]!
+  description: String!
+  timestamp: BigInt!
+}
