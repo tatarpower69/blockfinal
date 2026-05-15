@@ -39,65 +39,65 @@ contract DeFiAMM is ERC20, ReentrancyGuard {
 
     /**
      * @dev Swap tokens using the constant-product formula.
-     * @param _tokenIn Address of the token being sent.
-     * @param _amountIn Amount of tokens being sent.
-     * @param _minAmountOut Minimum amount of tokens expected (slippage protection).
+     * @param amountIn Amount of tokens being sent.
+     * @param minAmountOut Minimum amount of tokens expected (slippage protection).
      */
-    function swap(address _tokenIn, uint256 _amountIn, uint256 _minAmountOut) external nonReentrant returns (uint256 amountOut) {
-        require(_tokenIn == address(TOKEN0) || _tokenIn == address(TOKEN1), "Invalid token");
-        require(_amountIn > 0, "Amount must be > 0");
+    function swap(address tokenInAddress, uint256 amountIn, uint256 minAmountOut) external nonReentrant returns (uint256 amountOut) {
+        require(tokenInAddress == address(TOKEN0) || tokenInAddress == address(TOKEN1), "Invalid token");
+        require(amountIn > 0, "Amount must be > 0");
 
-        bool isToken0 = _tokenIn == address(TOKEN0);
+        bool isToken0 = tokenInAddress == address(TOKEN0);
         (IERC20 tokenIn, IERC20 tokenOut, uint256 resIn, uint256 resOut) = isToken0
             ? (TOKEN0, TOKEN1, reserve0, reserve1)
             : (TOKEN1, TOKEN0, reserve1, reserve0);
 
-        tokenIn.safeTransferFrom(msg.sender, address(this), _amountIn);
+        tokenIn.safeTransferFrom(msg.sender, address(this), amountIn);
 
         // 0.3% fee: amountInWithFee = amountIn * 997 / 1000
-        uint256 amountInWithFee = (_amountIn * (FEE_DENOMINATOR - FEE)) / FEE_DENOMINATOR;
+        uint256 amountInWithFee = (amountIn * (FEE_DENOMINATOR - FEE)) / FEE_DENOMINATOR;
         
         // dy = (y * dx) / (x + dx)
         amountOut = (resOut * amountInWithFee) / (resIn + amountInWithFee);
-        require(amountOut >= _minAmountOut, "Slippage too high");
-
-        tokenOut.safeTransfer(msg.sender, amountOut);
+        require(amountOut >= minAmountOut, "Slippage too high");
 
         _update(TOKEN0.balanceOf(address(this)), TOKEN1.balanceOf(address(this)));
-        emit Swap(msg.sender, _tokenIn, _amountIn, amountOut);
+        tokenOut.safeTransfer(msg.sender, amountOut);
+
+        emit Swap(msg.sender, tokenInAddress, amountIn, amountOut);
     }
 
-    function addLiquidity(uint256 _amount0, uint256 _amount1) external nonReentrant returns (uint256 shares) {
-        TOKEN0.safeTransferFrom(msg.sender, address(this), _amount0);
-        TOKEN1.safeTransferFrom(msg.sender, address(this), _amount1);
+    function addLiquidity(uint256 amount0, uint256 amount1) external nonReentrant returns (uint256 shares) {
+        TOKEN0.safeTransferFrom(msg.sender, address(this), amount0);
+        TOKEN1.safeTransferFrom(msg.sender, address(this), amount1);
 
         if (totalSupply() == 0) {
-            shares = _sqrtYul(_amount0 * _amount1);
+            shares = _sqrtYul(amount0 * amount1);
         } else {
-            shares = _min((_amount0 * totalSupply()) / reserve0, (_amount1 * totalSupply()) / reserve1);
+            shares = _min((amount0 * totalSupply()) / reserve0, (amount1 * totalSupply()) / reserve1);
         }
 
         require(shares > 0, "Shares = 0");
         _mint(msg.sender, shares);
 
         _update(TOKEN0.balanceOf(address(this)), TOKEN1.balanceOf(address(this)));
-        emit AddLiquidity(msg.sender, _amount0, _amount1, shares);
+        emit AddLiquidity(msg.sender, amount0, amount1, shares);
     }
 
-    function removeLiquidity(uint256 _shares) external nonReentrant returns (uint256 amount0, uint256 amount1) {
+    function removeLiquidity(uint256 shares) external nonReentrant returns (uint256 amount0, uint256 amount1) {
         uint256 bal0 = TOKEN0.balanceOf(address(this));
         uint256 bal1 = TOKEN1.balanceOf(address(this));
 
-        amount0 = (_shares * bal0) / totalSupply();
-        amount1 = (_shares * bal1) / totalSupply();
+        amount0 = (shares * bal0) / totalSupply();
+        amount1 = (shares * bal1) / totalSupply();
         require(amount0 > 0 && amount1 > 0, "Amount = 0");
 
-        _burn(msg.sender, _shares);
+        _burn(msg.sender, shares);
+        _update(TOKEN0.balanceOf(address(this)) - amount0, TOKEN1.balanceOf(address(this)) - amount1);
+        
         TOKEN0.safeTransfer(msg.sender, amount0);
         TOKEN1.safeTransfer(msg.sender, amount1);
 
-        _update(TOKEN0.balanceOf(address(this)), TOKEN1.balanceOf(address(this)));
-        emit RemoveLiquidity(msg.sender, amount0, amount1, _shares);
+        emit RemoveLiquidity(msg.sender, amount0, amount1, shares);
     }
 
     /**
