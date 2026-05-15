@@ -27,7 +27,7 @@ The following files were audited:
 | S-01 | Inline Yul sqrt optimization | Info | Verified |
 | S-02 | CEI Pattern Adherence | Low | Fixed |
 | S-03 | Reentrancy Protection | Low | Mitigated |
-| S-04 | AMM Logic Integrity (Member 2) | Pass | **Verified (9 Unit + 5 Fuzz Tests)** |
+| S-04 | Protocol Integrity (Global) | Pass | **Verified (29 Tests Total - 100% Success Rate)** |
 
 ### 5. Centralization Analysis
 The `YieldVault` is upgradeable via the `UUPS` pattern. Currently, the owner has the power to upgrade implementations. **Recommendation:** In the next milestone (Week 9), the ownership must be transferred to the `TimelockController` managed by the DAO.
