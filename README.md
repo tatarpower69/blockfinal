@@ -58,3 +58,4 @@ $ forge fmt
 ```shell
 $ slither .
 ```
+Project run succesful
