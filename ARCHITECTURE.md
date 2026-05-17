@@ -1,31 +1,94 @@
 # Project Architecture & Technical Specification
 
-## 1. System Overview
+## 1. System Overview (C4 Level 1)
 The DeFi Super-App is a modular ecosystem on Arbitrum Sepolia consisting of a Constant Product AMM, a Yield-Optimized Vault, and a Governance DAO.
 
-## 2. Component Breakdown
+```mermaid
+graph TD
+    User([User/Voter]) -->|Swaps, LPs| AMM[DeFi AMM]
+    User -->|Stakes| Vault[Yield Vault]
+    User -->|Proposes/Votes| Gov[Governor DAO]
+    Gov -->|Executes via Timelock| AMM
+    Gov -->|Executes via Timelock| Vault
+    Oracle[Chainlink Oracle] -->|Price Feeds| AMM
+    Oracle -->|Price Feeds| Vault
+```
 
-### 2.1 Core Contracts (Member A)
-- **`DeFiAMM.sol`**: Custom AMM implementation. Uses `CREATE2` for deterministic pair deployment. Math is optimized with inline **Yul** for computing square roots to save gas during `mint` and `burn` operations.
-- **`YieldVault.sol`**: An **ERC-4626** compliant vault. Uses **UUPS (Universal Upgradeable Proxy Standard)** to allow future strategy migrations. Managed via `AccessControl`.
-- **`AMMFactory.sol`**: Registry and deployer for AMM pairs.
-- **`OracleConsumer.sol`**: Integration with **Chainlink Data Feeds** on Arbitrum for real-time asset pricing.
-- **`GovToken.sol`**: ERC20 token with `ERC20Votes` extension for snapshot-based governance.
+## 2. Component Breakdown (C4 Level 2)
 
-### 2.2 Governance Flow (Member B - To be implemented)
-- **`Governor.sol`**: OpenZeppelin-based governance contract.
-- **`Timelock.sol`**: 2-day delay for all governance-approved actions.
+```mermaid
+graph TD
+    UI[Frontend React App] -->|Ethers.js / Wagmi| Proxy[UUPS Proxy]
+    Proxy -->|Delegates| Impl[YieldVault V1]
+    UI -->|Queries| Subgraph[The Graph Node]
+    Impl -->|Reads| Token[GovToken ERC20Votes]
+    UI -->|Calls| Factory[AMM Factory]
+    Factory -->|Deploys CREATE2| Pair[AMM Pair]
+```
 
-## 3. Deployment Topology
-- **Network**: Arbitrum Sepolia (L2)
-- **Execution Environment**: EVM (Shanghai/Cancun ready)
-- **Upgradeability**: Proxy-first approach for the Vault. Core AMM logic is immutable.
+## 3. Sequence Diagrams
 
-## 4. Key Security Patterns
-1. **Checks-Effects-Interactions (CEI)**: Applied across all state-changing functions to prevent reentrancy.
-2. **AccessControl**: Granular roles (ADMIN, STRATEGIST, UPGRADER) instead of a single `Ownable`.
-3. **Dead-shares protection**: Initial liquidity burn in AMM to prevent inflation attacks.
+### 3.1 Swap Execution
+```mermaid
+sequenceDiagram
+    participant User
+    participant Router
+    participant Pair
+    User->>Router: swapExactTokensForTokens()
+    Router->>Pair: transfer tokenIn
+    Router->>Pair: swap()
+    Pair->>Pair: check K invariant (Yul optimized)
+    Pair->>User: transfer tokenOut
+```
 
-## 5. Integration Guide for Member B
-- **Subgraph**: Focus on `Swap`, `Mint`, and `Burn` events from Factory-deployed pairs.
-- **Frontend**: Connect using `wagmi` / `rainbowkit`. Use `vYLT` (Vault) share price for ROI charts.
+### 3.2 Governance Lifecycle
+```mermaid
+sequenceDiagram
+    participant Proposer
+    participant Governor
+    participant Timelock
+    Proposer->>Governor: propose(targets, values, calldatas)
+    Governor->>Governor: state = Pending
+    loop Voting Period (1 week)
+        Voters->>Governor: castVote()
+    end
+    Proposer->>Governor: queue()
+    Governor->>Timelock: queueTransaction()
+    loop Timelock Delay (2 days)
+        Timelock->>Timelock: wait
+    end
+    Proposer->>Governor: execute()
+    Timelock->>TargetContract: call()
+```
+
+## 4. Data Model & Storage Layout
+
+### YieldVault (UUPS) Storage
+To prevent storage collisions during upgrades, `YieldVault` utilizes the standard ERC-4626 storage variables appended to OpenZeppelin's upgradeable storage gaps.
+- `slot 0`: `_initialized` and `_initializing` (Initializable)
+- `slot 1-50`: `__gap` for base contracts.
+- `slot 51`: `asset` address.
+
+**Rule**: New variables in V2 MUST be added after the existing variables.
+
+## 5. Trust Assumptions
+- **TimelockController**: Holds the ultimate authority. Compromise of the Timelock means complete protocol takeover. Delay is set to 2 days to allow users to exit if a malicious proposal passes.
+- **Admin Roles**: Factory owner can pause new pair creation but cannot freeze existing pairs.
+- **Oracle Risk**: Relies on Chainlink. If Chainlink nodes go offline, the staleness check will revert transactions, halting protocol functions that rely on price discovery, rather than allowing trades at bad prices.
+
+## 6. Architectural Decision Records (ADR)
+
+### ADR 1: UUPS vs Transparent Proxy
+- **Context**: Need upgradeability for YieldVault.
+- **Decision**: UUPS.
+- **Consequences**: Cheaper deployments, upgrade logic is inside the implementation, reducing proxy overhead.
+
+### ADR 2: Yul for AMM Math
+- **Context**: AMM square root calculations for LP shares are gas-heavy.
+- **Decision**: Inline Yul assembly for `sqrt`.
+- **Consequences**: Harder to read, but saves ~2000 gas per mint/burn.
+
+### ADR 3: Foundry vs Hardhat
+- **Context**: Testing framework selection.
+- **Decision**: Foundry.
+- **Consequences**: Fuzzing and Invariant testing built-in, native Solidity tests, 10x faster execution.
