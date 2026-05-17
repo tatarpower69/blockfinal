@@ -57,10 +57,6 @@ const SwapComponent = () => {
     <div className="glass-panel float-anim">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
         <h2 style={{ fontSize: '18px', fontWeight: 900, letterSpacing: '0.05em' }}>SWAP</h2>
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <RefreshCw size={18} color="#64748b" className={isPending ? 'animate-spin' : ''} style={{ cursor: 'pointer' }} />
-          <Settings size={18} color="#64748b" style={{ cursor: 'pointer' }} />
-        </div>
       </div>
 
       <div className="swap-input-group">

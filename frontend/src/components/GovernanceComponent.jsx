@@ -49,9 +49,6 @@ const GovernanceComponent = () => {
              <p style={{ fontSize: '12px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>4,821 Voters Active</p>
           </div>
         </div>
-        <button className="btn-connect" style={{ background: 'rgba(124, 58, 237, 0.1)', border: '1px solid rgba(124, 58, 237, 0.2)', color: '#a78bfa', padding: '12px 28px' }}>
-          <Plus size={16} /> NEW PROPOSAL
-        </button>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
