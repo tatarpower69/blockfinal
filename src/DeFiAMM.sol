@@ -62,8 +62,8 @@ contract DeFiAMM is ERC20, ReentrancyGuard, Ownable {
 
         tokenIn.safeTransferFrom(msg.sender, address(this), amountIn);
 
-        uint256 amountInWithFee = (amountIn * (FEE_DENOMINATOR - fee)) / FEE_DENOMINATOR;
-        amountOut = (resOut * amountInWithFee) / (resIn + amountInWithFee);
+        uint256 amountInWithFee = amountIn * (FEE_DENOMINATOR - fee);
+        amountOut = (resOut * amountInWithFee) / (resIn * FEE_DENOMINATOR + amountInWithFee);
         require(amountOut >= minAmountOut, "Slippage too high");
 
         _update(TOKEN0.balanceOf(address(this)), TOKEN1.balanceOf(address(this)));

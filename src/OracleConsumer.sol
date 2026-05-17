@@ -21,6 +21,7 @@ contract OracleConsumer {
      * @param priceFeed The address of the Chainlink price feed.
      */
     function getLatestPrice(address priceFeed) public view returns (int256) {
+        // slither-disable-next-line unused-return
         (uint80 roundId, int256 price,/* uint256 startedAt */, uint256 updatedAt, uint80 answeredInRound) =
             AggregatorV3Interface(priceFeed).latestRoundData();
 
