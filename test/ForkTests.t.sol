@@ -8,7 +8,7 @@ import {YieldVault} from "../src/YieldVault.sol";
 contract ForkTests is Test {
     OracleConsumer oracle;
     YieldVault vault;
-    
+
     // Deployed addresses on Arbitrum Sepolia
     address constant ORACLE_CONSUMER = 0xAcE38F2587fFD46b44b132dCfb608D446A561589;
     address constant YIELD_VAULT_PROXY = 0x64178a180DA30EcA3F0b03674911cD33EB5933Ac;
@@ -26,7 +26,8 @@ contract ForkTests is Test {
     }
 
     function testForkGovTokenSupply() public {
-        (bool success, bytes memory data) = 0x2d16DA4Df8CFB3A6962Aa28Dce9d0c6F089d6ac7.staticcall(abi.encodeWithSignature("totalSupply()"));
+        (bool success, bytes memory data) =
+            0x2d16DA4Df8CFB3A6962Aa28Dce9d0c6F089d6ac7.staticcall(abi.encodeWithSignature("totalSupply()"));
         assertTrue(success);
         uint256 supply = abi.decode(data, (uint256));
         assertGt(supply, 0);

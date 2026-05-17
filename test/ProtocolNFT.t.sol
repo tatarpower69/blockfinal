@@ -33,7 +33,7 @@ contract ProtocolNFTTest is Test {
         nft.safeMint(user1);
         nft.safeMint(user2);
         vm.stopPrank();
-        
+
         assertEq(nft.balanceOf(user1), 1);
         assertEq(nft.balanceOf(user2), 1);
         assertEq(nft.ownerOf(0), user1);
@@ -49,10 +49,10 @@ contract ProtocolNFTTest is Test {
     function testTransfer() public {
         vm.prank(owner);
         nft.safeMint(user1);
-        
+
         vm.prank(user1);
         nft.safeTransferFrom(user1, user2, 0);
-        
+
         assertEq(nft.ownerOf(0), user2);
         assertEq(nft.balanceOf(user1), 0);
         assertEq(nft.balanceOf(user2), 1);
@@ -61,12 +61,12 @@ contract ProtocolNFTTest is Test {
     function testApproval() public {
         vm.prank(owner);
         nft.safeMint(user1);
-        
+
         vm.prank(user1);
         nft.approve(user2, 0);
-        
+
         assertEq(nft.getApproved(0), user2);
-        
+
         vm.prank(user2);
         nft.safeTransferFrom(user1, user2, 0);
         assertEq(nft.ownerOf(0), user2);

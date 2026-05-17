@@ -19,20 +19,20 @@ contract ProtocolTest is Test {
     AMMFactory public factory;
     OracleConsumer public oracle;
     MockV3Aggregator public aggregator;
-    
+
     address public user = address(0x1);
 
     function setUp() public {
         vm.warp(1000000); // Avoid underflow in staleness checks
         // Deploy GovToken
         token = new GovToken();
-        
+
         // Deploy Factory
         factory = new AMMFactory();
-        
+
         // Deploy Oracle
         oracle = new OracleConsumer();
-        
+
         // Deploy Mock Aggregator
         aggregator = new MockV3Aggregator(8, 2000e8); // Initial price $2000
     }
@@ -53,7 +53,7 @@ contract ProtocolTest is Test {
         address tokenB = address(0x2);
         address pair = factory.createPair(address(token), tokenB);
         assertTrue(pair != address(0));
-        
+
         // Check if deterministic address is stored
         assertEq(factory.getPair(address(token), tokenB), pair);
     }
@@ -64,7 +64,7 @@ contract ProtocolTest is Test {
     function testOraclePrice() public {
         int256 price = oracle.getLatestPrice(address(aggregator));
         assertEq(price, 2000e8);
-        
+
         // Advance time to trigger staleness
         vm.warp(block.timestamp + 3601);
         vm.expectRevert(OracleConsumer.PriceStale.selector);
@@ -76,17 +76,13 @@ contract ProtocolTest is Test {
      */
     function testVaultUpgrade() public {
         YieldVault implementation = new YieldVault();
-        bytes memory initData = abi.encodeWithSelector(
-            YieldVault.initialize.selector,
-            address(token),
-            "Vault Shares",
-            "vSHARES"
-        );
-        
+        bytes memory initData =
+            abi.encodeWithSelector(YieldVault.initialize.selector, address(token), "Vault Shares", "vSHARES");
+
         // Deploy Proxy
         ERC1967Proxy proxy = new ERC1967Proxy(address(implementation), initData);
         YieldVault vault = YieldVault(address(proxy));
-        
+
         assertEq(vault.name(), "Vault Shares");
         assertEq(vault.asset(), address(token));
     }

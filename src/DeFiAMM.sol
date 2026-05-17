@@ -48,14 +48,17 @@ contract DeFiAMM is ERC20, ReentrancyGuard, Ownable {
         emit FeeUpdated(newFee);
     }
 
-    function swap(address tokenInAddress, uint256 amountIn, uint256 minAmountOut) external nonReentrant returns (uint256 amountOut) {
+    function swap(address tokenInAddress, uint256 amountIn, uint256 minAmountOut)
+        external
+        nonReentrant
+        returns (uint256 amountOut)
+    {
         require(tokenInAddress == address(TOKEN0) || tokenInAddress == address(TOKEN1), "Invalid token");
         require(amountIn > 0, "Amount must be > 0");
 
         bool isToken0 = tokenInAddress == address(TOKEN0);
-        (IERC20 tokenIn, IERC20 tokenOut, uint256 resIn, uint256 resOut) = isToken0
-            ? (TOKEN0, TOKEN1, reserve0, reserve1)
-            : (TOKEN1, TOKEN0, reserve1, reserve0);
+        (IERC20 tokenIn, IERC20 tokenOut, uint256 resIn, uint256 resOut) =
+            isToken0 ? (TOKEN0, TOKEN1, reserve0, reserve1) : (TOKEN1, TOKEN0, reserve1, reserve0);
 
         tokenIn.safeTransferFrom(msg.sender, address(this), amountIn);
 
@@ -96,7 +99,7 @@ contract DeFiAMM is ERC20, ReentrancyGuard, Ownable {
 
         _burn(msg.sender, shares);
         _update(TOKEN0.balanceOf(address(this)) - amount0, TOKEN1.balanceOf(address(this)) - amount1);
-        
+
         TOKEN0.safeTransfer(msg.sender, amount0);
         TOKEN1.safeTransfer(msg.sender, amount1);
 
@@ -113,7 +116,7 @@ contract DeFiAMM is ERC20, ReentrancyGuard, Ownable {
             default {
                 z := y
                 let x := add(div(y, 2), 1)
-                for { } lt(x, z) { } {
+                for {} lt(x, z) {} {
                     z := x
                     x := div(add(div(y, x), x), 2)
                 }

@@ -9,17 +9,17 @@ contract AMMUnitTests is Test {
     DeFiAMM amm;
     MockToken t0;
     MockToken t1;
-    
+
     address user = address(0x1);
 
     function setUp() public {
         t0 = new MockToken("T0", "T0");
         t1 = new MockToken("T1", "T1");
         amm = new DeFiAMM(address(t0), address(t1));
-        
+
         deal(address(t0), user, 1000e18);
         deal(address(t1), user, 1000e18);
-        
+
         vm.startPrank(user);
         t0.approve(address(amm), type(uint256).max);
         t1.approve(address(amm), type(uint256).max);
@@ -43,7 +43,7 @@ contract AMMUnitTests is Test {
 
     function testSetFeeRestriction() public {
         vm.prank(address(0xdead));
-        vm.expectRevert(); 
+        vm.expectRevert();
         amm.setFee(5);
     }
 

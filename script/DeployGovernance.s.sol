@@ -21,12 +21,7 @@ contract DeployGovernance is Script {
         address[] memory executors = new address[](1);
         executors[0] = address(0); // Anyone can execute
 
-        TimelockController timelock = new TimelockController(
-            1 days,
-            proposers,
-            executors,
-            deployer
-        );
+        TimelockController timelock = new TimelockController(1 days, proposers, executors, deployer);
         console2.log("Timelock deployed at:", address(timelock));
 
         // 2. Deploy Governor
